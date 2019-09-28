@@ -1,0 +1,15 @@
+imports:
+- path: iam-serviceAccount.jinja
+- path: backend-vm.jinja
+
+resources:
+- name: &SA_NAME backend-vm-sa
+  type: iam-serviceAccount.jinja
+- name: backend-vm
+  type: backend-vm.jinja
+  properties:
+    serviceAccountId: *SA_NAME
+# - name: my-pubsub-topic
+#   type: pubsub_topic.jinja
+#   properties:
+#     serviceAccountId: *SA_NAME
