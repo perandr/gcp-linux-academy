@@ -1,0 +1,30 @@
+info:
+  title: VPC resource for backend 
+  author: PerAndr
+  description: Creates a VPC with subnetworks.
+
+imports:
+- path: vpc.jinja
+
+required:
+#- region
+- ip_cidr
+
+properties:
+  subnetworks:
+    type: array
+    description: >
+      An array of subnetworks.
+    item:
+      type: object
+      properties:
+        region:
+          type: string
+        ip_cidr:
+          type: string
+          pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$  
+outputs:
+  network:
+    type: string
+  subnet:
+    type: object

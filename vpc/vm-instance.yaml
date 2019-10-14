@@ -1,0 +1,9 @@
+imports:
+  - path: vm-instance.jinja
+
+resources:
+  - name: backend-vm
+    type: vm-instance.jinja
+    properties:
+      region: us-central1
+      zone: us-central1-a
