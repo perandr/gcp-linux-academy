@@ -24,12 +24,34 @@ resources:
     tags: 
       - allow-ssh
 
+- name: front-vm
+  type: vm-instance.jinja
+  properties:
+    region: us-east1
+    zone: us-east1-b
+    network: $(ref.backend-vpc.network)
+    subnet: $(ref.backend-vpc.vpc-subnets[1])
+    tags: 
+      - allow-icmp
+
 - type: fw-rules.jinja
-  name: backend-fw-rule
+  name: allow-ssh-fw-rule
   properties:
     network: $(ref.backend-vpc.network)
     sourceRanges: 
       - 0.0.0.0/0
-    port: 22
+    IPProtocol: tcp
+    ports: [ 22 ]
     targetTags:
       - allow-ssh
+
+- type: fw-rules.jinja
+  name: allow-icmp-fw-rule
+  properties:
+    network: $(ref.backend-vpc.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: ICMP
+    ports: []
+    targetTags:
+      - allow-icmp
