@@ -1,5 +1,5 @@
 {% set deployment = env["deployment"] %}
-
+ 
 resources:
 - type: compute.v1.instance
   name: {{ deployment }}-vm
@@ -21,14 +21,17 @@ resources:
         type: ONE_TO_ONE_NAT
     tags:
         items: [ {{ properties["tags"]|join(', ') }} ]
-    {# serviceAccounts:
+{#    serviceAccounts:
     - email: $(ref.{{ env['deployment'] }}-sa.email) 
-
-    resources:
-- name: {{ deployment }}
+  #}
+      {#
+resources:
+- name: {{ deployment }}-sa
   type: iam.v1.serviceAccount
   properties:
     accountId: {{ deployment }}-sa
-    displayName: regions/{{ properties["region"] }}/subnetworks/{{ properties["subnet"] }}-serviceAccount
+    displayName: {{ deployment }}-sa    
+    Description: hello
+ description: {{ properties['subnet'] }} #}
 
-    #}
+  

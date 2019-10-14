@@ -19,7 +19,13 @@ resources:
  {% endfor %}
 
 outputs:
-  - name: subnet
-    value: $(ref.{{ properties['subnets'][0]['region'] }}-{{ 0 }}.selfLink)
+  - name: vpc-subnets
+    value: 
+    {% for i in range(properties['subnets']| length) %} 
+    - $(ref.{{ properties['subnets'][i]['region'] }}-{{ i }}.selfLink)
+    {% endfor %}
   - name: network
     value: $(ref.{{ deployment }}-vpc.selfLink)
+  {# $(ref.{{ properties['subnets'][i]['region'] }}-{{ i }}.selfLink),
+   #}
+   
