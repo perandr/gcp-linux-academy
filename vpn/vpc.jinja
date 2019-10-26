@@ -1,0 +1,28 @@
+{% set name = env["name"]%}
+
+resources:
+- name: {{ name }}-vpc
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+
+{% for i in range(properties['subnets']| length) %}    
+{% set subnet = properties['subnets'][i] %}
+- type: compute.v1.subnetwork
+  name: {{ name }}-vpc-{{ subnet['region'] }}-{{ i }}
+  properties:
+    region: {{ subnet['region'] }}
+    ipCidrRange: {{ subnet['ip_cidr'] }}
+    network: $(ref.{{ name }}-vpc.selfLink)
+ {% endfor %}
+
+outputs:
+  - name: vpc-subnets
+    value: 
+    {% for i in range(properties['subnets']| length) %} 
+    - $(ref.{{ name }}-vpc-{{ properties['subnets'][i]['region'] }}-{{ i }}.selfLink)
+    {% endfor %}
+  - name: network
+    value: $(ref.{{ name }}-vpc.selfLink)
+
+   

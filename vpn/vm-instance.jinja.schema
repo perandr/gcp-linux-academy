@@ -1,0 +1,19 @@
+info:
+  title: Backend instance in vpc template schema. 
+  author: PerAndr
+  description: Creates a  backend instance in vpc..
+
+imports:
+- path: vm-instance.jinja
+
+required:
+- zone
+- subnet
+
+properties:
+  zone:
+    type: string
+  subnet:
+    type: string
+  tags:
+    type: array

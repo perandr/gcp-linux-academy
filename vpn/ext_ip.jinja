@@ -1,0 +1,19 @@
+{% set name = env["name"]%}
+resources:
+{% for i in range(properties['regions']| length) %}    
+{% set region = properties['regions'][i] %}
+- name: {{ name }}{{i}}
+  type: compute.v1.address
+  properties:  
+    region: {{region}}
+ {% endfor %}
+
+outputs:
+  - name: vpn-gw-addresses
+    value: 
+   {% for i in range(properties['regions']| length) %}    
+   {% set region = properties['regions'][i] %}
+     - name: $(ref.{{ name }}{{i}}.name)
+       address: $(ref.{{ name }}{{i}}.address)
+       region: {{region}}
+    {% endfor %}

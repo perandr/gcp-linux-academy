@@ -1,0 +1,98 @@
+imports:
+- path: vpc.jinja
+- path: vm-instance.jinja
+- path: fw-rules.jinja
+
+resources:
+- type: vpc.jinja
+  name: backend-vpc-1
+  properties:
+    ip_cidr: 10.1.0.0/16
+    subnets:
+      - region: us-central1
+        ip_cidr: 10.1.1.0/24
+
+- type: vpc.jinja
+  name: backend-vpc-2
+  properties:
+    ip_cidr: 10.2.0.0/16
+    subnets:
+      - region: us-central1
+        ip_cidr: 10.2.0.0/24
+      - region: us-east1
+        ip_cidr: 10.2.1.0/24
+      - region: us-east4
+        ip_cidr: 10.2.2.0/24
+
+# - name: backend-vpc1-vm-1
+#   type: vm-instance.jinja
+#   properties:
+#     zone: us-central1-a
+#     subnet: $(ref.backend-vpc-1.vpc-subnets[0])
+#     tags: 
+#       - allow-ssh
+#       - allow-icmp
+
+# - name: backend-vpc2-vm-1
+#   type: vm-instance.jinja
+#   properties:
+#     region: us-central1
+#     zone: us-central1-a
+#     subnet: $(ref.backend-vpc-2.vpc-subnets[0])
+#     tags: 
+#       - allow-ssh
+#       - allow-icmp
+
+# - name: front-vpc2-vm-1
+#   type: vm-instance.jinja
+#   properties:
+#     region: us-east1
+#     zone: us-east1-b
+#     subnet: $(ref.backend-vpc-2.vpc-subnets[1])
+#     tags: 
+#       - allow-ssh
+#       - allow-icmp
+
+- type: fw-rules.jinja
+  name: allow-ssh-vpc1-fw-rule
+  properties:
+    network: $(ref.backend-vpc-1.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: tcp
+    ports: [ 22 ]
+    targetTags:
+      - allow-ssh
+
+- type: fw-rules.jinja
+  name: allow-ssh-vpc2-fw-rule
+  properties:
+    network: $(ref.backend-vpc-2.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: tcp
+    ports: [ 22 ]
+    targetTags:
+      - allow-ssh
+
+- type: fw-rules.jinja
+  name: allow-icmp-vpc1-fw-rule
+  properties:
+    network: $(ref.backend-vpc-1.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: ICMP
+    ports: []
+    targetTags:
+      - allow-icmp
+
+- type: fw-rules.jinja
+  name: allow-icmp-vpc2-fw-rule
+  properties:
+    network: $(ref.backend-vpc-2.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: ICMP
+    ports: []
+    targetTags:
+      - allow-icmp

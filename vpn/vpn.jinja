@@ -1,0 +1,69 @@
+{% set name = env["name"]%}
+
+resources:
+- name: {{ name }}-vpn-gw
+  type: compute.v1.targetVpnGateway
+  properties:
+    network: {{ properties["network"] }}
+    region: {{ properties["region"]}}
+
+- name: {{ name }}-vpn-esp-fwd-rule
+  type: compute.v1.forwardingRule
+  properties:
+    IPProtocol: ESP
+    IPAddress: {{ properties["source_address"] }}
+    region: {{properties["region"]}}
+    target: $(ref.{{ name }}-vpn-gw.selfLink)
+
+- name: {{ name }}-vpn-udp500-fwd-rule
+  type: compute.v1.forwardingRule
+  properties:
+    IPProtocol: UDP
+    portRange: 500
+    IPAddress: {{ properties["source_address"] }}
+    region: {{properties["region"]}}
+    target: $(ref.{{ name }}-vpn-gw.selfLink)
+    
+- name: {{ name }}-vpn-udp4500-fwd-rule
+  type: compute.v1.forwardingRule
+  properties:
+    IPProtocol: UDP
+    portRange: 4500
+    IPAddress: {{ properties["source_address"] }}
+    region: {{properties["region"]}}
+    target: $(ref.{{ name }}-vpn-gw.selfLink)
+{# 
+- name: {{ name }}-vpn-allow-vpn-fw-rule
+  type: compute.v1.firewall
+  properties:
+    IPProtocol: UDP
+    portRange: 4500
+    IPAddress: $(ref.{{ properties["source_address"] }}.selfLink)
+    region: {{properties["region"]}}
+    network: {{ properties["network"] }}
+    sourceRanges: {{ properties["target_subnet_cidr"] }}
+    allowed:
+      - IPProtocol: tcp
+      - IPProtocol: udp
+      - IPProtocol: icmp #}
+
+- name: {{ name }}-vpn-tunnel
+  type: compute.v1.vpnTunnel
+  properties:
+    targetVpnGateway: $(ref.{{ name }}-vpn-gw.selfLink)
+    peerIp: {{properties["target_address"]}}
+    region: {{properties["region"]}}
+    sharedSecret: {{properties["secret"]}}
+    localTrafficSelector:  
+     - 0.0.0.0/0
+    remoteTrafficSelector:  
+     - 0.0.0.0/0
+  metadata: 
+    dependsOn:
+    - {{ name }}-vpn-esp-fwd-rule
+    - {{ name }}-vpn-udp500-fwd-rule
+    - {{ name }}-vpn-udp4500-fwd-rule
+
+    {# forwardingRule: $({{ name }}-vpn-udp4500-fwd-rule.selfLink) #}
+    {# remoteTrafficSelector: 
+     - {{ properties["source_range"] }} #}

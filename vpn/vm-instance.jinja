@@ -1,0 +1,38 @@
+resources:
+- type: compute.v1.instance
+  name: {{ env['name'] }}
+  properties:
+    zone: {{ properties['zone'] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env['project'] }}/zones/{{ properties['zone'] }}/machineTypes/f1-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-9
+    networkInterfaces:
+    - subnetwork: {{ properties['subnet'] }}
+      # Access Config required to give the instance a public IP address
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+        items: [ {{ properties["tags"]|join(', ') }} ]
+  {# metadata: 
+    dependsOn:
+    -  {{ properties['subnet'] }} #}
+{#    serviceAccounts:
+    - email: $(ref.{{ env['deployment'] }}-sa.email) 
+  #}
+      {#
+resources:
+- name: {{ deployment }}-sa
+  type: iam.v1.serviceAccount
+  properties:
+    accountId: {{ deployment }}-sa
+    displayName: {{ deployment }}-sa    
+    Description: hello
+ description: {{ properties['subnet'] }} #}
+
+  

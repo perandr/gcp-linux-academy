@@ -1,0 +1,46 @@
+imports:
+- path: vpn.jinja
+- path: ext_ip.jinja 
+
+resources:
+- type: ext_ip.jinja 
+  name: vpn-gw-address
+  properties:
+    regions: 
+       - us-central1
+       - us-east1
+
+- type: vpn.jinja
+  name: vpc-1-to-vpc-2-vpn
+  properties:
+    network: global/networks/backend-vpc-1-vpc
+    network_self: "https://www.googleapis.com/compute/v1/projects/causal-temple-244304/global/networks/backend-vpc-1-vpc"
+    region: $(ref.vpn-gw-address.vpn-gw-addresses[0].region)
+    source_address: $(ref.vpn-gw-address.vpn-gw-addresses[0].address)
+    target_address: $(ref.vpn-gw-address.vpn-gw-addresses[1].address)
+    # secret: x88R'b&+*kxBmgmcfC$^Jfrb=dLjoi'cWknofeV>K/d<,!/1{JW"~/xY`cD/6<F
+    secret: DVkaPzGyN1o82TqUpYlqz1a3260eGHyl
+    target_subnet_cidr: 
+      - 10.2.0.0/24
+      - 10.2.1.0/24
+      - 10.2.2.0/24
+
+- type: vpn.jinja
+  name: vpc-2-to-vpc-1-vpn
+  properties:
+    network: global/networks/backend-vpc-2-vpc
+    network_self: "https://www.googleapis.com/compute/v1/projects/causal-temple-244304/global/networks/backend-vpc-2-vpc"
+    region: $(ref.vpn-gw-address.vpn-gw-addresses[1].region)
+    source_address: $(ref.vpn-gw-address.vpn-gw-addresses[1].address)
+    target_address: $(ref.vpn-gw-address.vpn-gw-addresses[0].address)
+    # secret: x88R'b&+*kxBmgmcfC$^Jfrb=dLjoi'cWknofeV>K/d<,!/1{JW"~/xY`cD/6<F
+    secret: DVkaPzGyN1o82TqUpYlqz1a3260eGHyl
+    target_subnet_cidr: 
+      - 10.1.1.0/24
+
+# resources:
+# - type: vpc.jinja
+#   name: vpc-1-to-vpc-2-vpn
+#   properties:
+#     vpc: backend-vpc-1-vpc
+#     ip:
