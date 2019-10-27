@@ -1,0 +1,59 @@
+imports:
+- path: vm-instance.jinja
+- path: fw-rules.jinja
+- path: disk.jinja
+
+resources:
+- name: disk
+  type: disk.jinja
+  properties:
+    sizeGb: 10
+    zone: us-central1-a
+
+- name: backend-vm
+  type: vm-instance.jinja
+  properties:
+    region: us-central1
+    zone: us-central1-a
+    network: global/networks/default
+    subnet: $(ref.backend-vpc.vpc-subnets[0])
+    diskName: $(ref.disk.name)
+    diskLink: $(ref.disk.link)
+    tags: 
+      - allow-ssh
+      - allow-http
+      - allow-icmp
+
+
+- type: fw-rules.jinja
+  name: allow-ssh-fw-rule
+  properties:
+    network: global/networks/default
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: tcp
+    ports: [ 22 ]
+    targetTags:
+      - allow-ssh
+
+- type: fw-rules.jinja
+  name: allow-http-fw-rule
+  properties:
+    network: global/networks/default
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: tcp
+    ports: [ 80 ]
+    targetTags:
+      - allow-http
+
+- type: fw-rules.jinja
+  name: allow-icmp-fw-rule
+  properties:
+    network: global/networks/default
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: ICMP
+    ports: []
+    targetTags:
+      - allow-icmp

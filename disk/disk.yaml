@@ -1,0 +1,10 @@
+imports:
+- path: disk.jinja
+
+resources:
+- name: backend
+  type: disk.jinja
+  properties:
+    sizeGb: 10
+    zone: us-central1-a
+    

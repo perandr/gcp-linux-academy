@@ -1,0 +1,13 @@
+
+resources:
+- name: {{ env['name'] }}-disk
+  type: compute.v1.disk
+  properties:
+    sizeGb: {{properties["sizeGb"]}}
+    zone: {{properties["zone"]}}
+
+outputs:
+  - name: name
+    value: {{ env['name'] }}-disk
+  - name: link
+    value: $(ref.{{ env['name'] }}-disk.selfLink)
