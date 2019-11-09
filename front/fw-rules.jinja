@@ -1,0 +1,13 @@
+{% set deployment = env["deployment"] %}
+
+resources:
+- name: {{ env['name'] }}
+  type: compute.v1.firewall
+  properties:
+    direction: INGRESS
+    network: {{ properties["network"] }}
+    sourceRanges: {{ properties["sourceRanges"] }}
+    allowed:
+      - IPProtocol: {{ properties["IPProtocol"] if properties["IPProtocol"] else 'tcp' }}
+        ports: {{ properties["ports"] }}
+    targetTags: {{ properties["targetTags"] }}

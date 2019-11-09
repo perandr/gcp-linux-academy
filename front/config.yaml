@@ -1,0 +1,73 @@
+imports:
+- path: vpc.jinja
+- path: front-instances.jinja
+- path: lb.jinja
+- path: fw-rules.jinja
+
+resources:
+- type: vpc.jinja
+  name: backend-vpc
+  properties:
+    ip_cidr: 10.0.1.0/16
+    subnets:
+      - region: us-central1
+        ip_cidr: 10.0.1.0/24
+      - region: us-east1
+        ip_cidr: 10.0.2.0/24
+
+
+- type: front-instances.jinja
+  name: front-inst
+  properties:
+    region: us-central1
+    zone: us-central1-a
+    subnet: $(ref.backend-vpc.vpc-subnets[0])
+    network: $(ref.backend-vpc.network)
+    externalIp: false
+    instancesCount: 1
+    tags:
+      - allow-http
+      - allow-ssh
+      - allow-icmp
+
+- type: lb.jinja
+  name: lb
+  properties:
+    healthCheck: $(ref.front-inst.healthCheck)
+    instanceGroupLink: $(ref.front-inst.instanceGroup.link)
+    instanceGroupName: $(ref.front-inst.instanceGroup.name)
+    region: us-central1
+    
+- type: fw-rules.jinja
+  name: allow-http-fw-rule
+  properties:
+    network: $(ref.backend-vpc.network)
+    sourceRanges: 
+      - 35.191.0.0/16
+      - 130.211.0.0/22
+    IPProtocol: tcp
+    ports: [ 80 ]
+    targetTags:
+      - allow-http
+
+- type: fw-rules.jinja
+  name: allow-ssh-fw-rule
+  properties:
+    network: $(ref.backend-vpc.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: tcp
+    ports: [ 22 ]
+    targetTags:
+      - allow-ssh
+
+- type: fw-rules.jinja
+  name: allow-icmp-fw-rule
+  properties:
+    network: $(ref.backend-vpc.network)
+    sourceRanges: 
+      - 0.0.0.0/0
+    IPProtocol: ICMP
+    ports: []
+    targetTags:
+      - allow-icmp

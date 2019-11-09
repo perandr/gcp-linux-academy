@@ -1,0 +1,58 @@
+{% set baseName = env["deployment"] + "-" %}
+
+resources:
+- type: compute.v1.globalAddress
+  name: {{ baseName }}{{ env['name'] }}-ip
+  properties:  
+    {# purpose: GCE_ENDPOINT #}
+
+- type: compute.v1.globalForwardingRule
+  name: {{ baseName }}{{ env['name'] }}-fwr
+  properties:
+    IPAddress: $(ref.{{ baseName }}{{ env['name'] }}-ip.selfLink)
+    IPProtocol: TCP
+    portRange: 80-80
+    target: $(ref.{{ baseName }}{{ env['name'] }}-http-proxy.selfLink)
+
+- type: compute.v1.targetHttpProxy
+  name: {{ baseName }}{{ env['name'] }}-http-proxy
+  properties:  
+    urlMap: $(ref.{{baseName}}{{ env['name'] }}-url-map.selfLink)
+  metadata: 
+    dependsOn:
+     - {{baseName}}{{ env['name'] }}-url-map
+    
+- type: compute.v1.urlMap
+  name: {{baseName}}{{ env['name'] }}-url-map
+  properties:
+    hostRules:
+      - hosts: [ "*" ]
+        pathMatcher: root-path
+    pathMatchers:
+      - name: root-path
+        defaultService: $(ref.{{baseName}}{{ env['name'] }}-bs.selfLink)
+    defaultService: $(ref.{{baseName}}{{ env['name'] }}-bs.selfLink)
+  metadata: 
+    dependsOn:
+     - {{baseName}}{{ env['name'] }}-bs
+
+
+- type: compute.v1.backendService
+  name: {{baseName}}{{ env['name'] }}-bs
+  properties:
+    healthChecks:
+     - {{ properties['healthCheck'] }}
+    backends:
+     - group: {{ properties['instanceGroupLink'] }}
+       balancingMode: UTILIZATION
+       maxUtilization: 0.85
+    enableCDN: false
+    region: {{ properties['region'] }}
+    failoverPolicy:
+        disableConnectionDrainOnFailover: true
+        dropTrafficIfUnhealthy: true
+        failoverRatio: 0.5
+    loadBalancingScheme: EXTERNAL
+  metadata: 
+    dependsOn:
+    -  {{ properties['instanceGroupName'] }}

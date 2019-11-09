@@ -1,0 +1,31 @@
+{% set deployment = env["deployment"]%}
+
+resources:
+- name: {{ deployment }}-vpc
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+
+{% for i in range(properties['subnets']| length) %}    
+{% set subnet = properties['subnets'][i] %}
+- type: compute.v1.subnetwork
+  name: {{ subnet['region'] }}-{{ i }}
+  properties:
+    region: {{ subnet['region'] }}
+    ipCidrRange: {{ subnet['ip_cidr'] }}
+    network: $(ref.{{ deployment }}-vpc.selfLink)
+    metadata: 
+      dependsOn: {{ deployment }}-vpc
+ {% endfor %}
+
+outputs:
+  - name: vpc-subnets
+    value: 
+    {% for i in range(properties['subnets']| length) %} 
+    - $(ref.{{ properties['subnets'][i]['region'] }}-{{ i }}.selfLink)
+    {% endfor %}
+  - name: network
+    value: $(ref.{{ deployment }}-vpc.selfLink)
+  {# $(ref.{{ properties['subnets'][i]['region'] }}-{{ i }}.selfLink),
+   #}
+   

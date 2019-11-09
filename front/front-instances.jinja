@@ -1,0 +1,99 @@
+{% set baseName = env["deployment"] + "-" %}
+
+resources:
+- type: compute.v1.instanceTemplate
+  name: {{baseName}}{{ env['name'] }}-it
+  properties:
+    properties:
+      zone: {{ properties['zone'] }}
+      machineType: f1-micro
+      disks:
+       - deviceName: boot
+         type: PERSISTENT
+         boot: true
+         autoDelete: true
+         initializeParams:
+            sourceImage: projects/debian-cloud/global/images/debian-9-stretch-v20191014
+      networkInterfaces:
+        - subnetwork:  {{ properties['subnet'] }}
+       {% if properties["externalIp"] %}
+         # Access Config required to give the instance a public IP address
+         accessConfigs:
+          - name: External NAT
+          type: ONE_TO_ONE_NAT
+       {% endif %}
+      tags:
+        items: [ {{ properties["tags"]|join(', ') }} ]
+      metadata:
+        items:
+        - key: startup-script
+          value: |
+             #!/bin/bash
+             apt update
+             apt install -y apache2
+             host=$(hostname)
+             {% raw %}
+             cat <<EOF > /var/www/html/index.html
+             <html><body>
+             <h2>Welcome to your custom website.$host</h2>
+             <h3>Created with a direct input startup script!</h3>
+             </body></html>
+             EOF
+             {% endraw %}
+
+- type: compute.v1.healthChecks
+  name: {{baseName}}{{ env['name'] }}-health
+  properties:
+    type: HTTP
+    httpHealthCheck:
+        portSpecification: USE_NAMED_PORT
+        portName: img-http-igm
+        requestPath: /
+    checkIntervalSec: 10
+    timeoutSec: 10
+    unhealthyThreshold: 3
+    healthyThreshold: 2
+
+- type: compute.v1.instanceGroupManagers
+  name: {{baseName}}{{ env['name'] }}-igm
+  properties:
+    subnetwork: {{ properties['subnet'] }}
+    zone: {{ properties['zone'] }}
+    targetSize: {{properties['instancesCount']}}
+    instanceTemplate:  $(ref.{{baseName}}{{ env['name'] }}-it.selfLink)
+    {# distributionPolicy:
+     - zones:
+        zone:  #}
+    namedPorts:
+     -  name: img-http-igm
+        port: 80
+    autoHealingPolicies:
+     -  healthCheck: $(ref.{{baseName}}{{ env['name'] }}-health.selfLink)
+        initialDelaySec: 60
+    updatePolicy:
+        type: PROACTIVE
+        minimalAction: REPLACE
+        maxSurge: 
+            fixed: 1
+        maxUnavailable: 
+            fixed: 1
+
+{% if not properties["externalIp"] %}
+- type: compute.v1.router
+  name: {{baseName}}{{ env['name'] }}-nat-router
+  properties:
+    region: {{ properties["region"] }}
+    network: {{ properties["network"] }}
+    nats:
+     - name: {{baseName}}{{ env['name'] }}-nat
+       natIpAllocateOption: AUTO_ONLY
+       sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+{% endif %}
+
+outputs:
+  - name: healthCheck
+    value: $(ref.{{baseName}}{{ env['name'] }}-health.selfLink)
+  - name: instanceGroup
+    value: 
+      link: $(ref.{{baseName}}{{ env['name'] }}-igm.instanceGroup)
+      name: {{baseName}}{{ env['name'] }}-igm #}
